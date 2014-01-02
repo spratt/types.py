@@ -46,8 +46,8 @@ def bind_(rule):
 bind_.astName = 'Bind'
 
 def defun_(rule):
-    rule | (LPAREN, DEFUN, IDENT, LPAREN, star(IDENT), RPAREN, expr_list_, RPAREN)
-    rule.astAttrs = {'name': IDENT, 'params': [IDENT], 'body': expr_list_}
+    rule | (LPAREN, DEFUN, IDENT, LPAREN, star(IDENT), RPAREN, expr_, RPAREN)
+    rule.astAttrs = {'name': IDENT, 'params': [IDENT], 'body': expr_}
 defun_.astName = 'Defun'
 
 grammar = Grammar(start=expr_list_,
@@ -70,7 +70,7 @@ def t_expr_list(node):
 
 @lisp.translates(STRING)
 def t_string(node):
-    return {'type': 'String', 'val': node.value[1:-1].decode('string_escape')}
+    return {'kind': 'value', 'type': 'String', 'val': node.value[1:-1].decode('string_escape')}
 
 @lisp.translates(NUMBER)
 def t_number(node):

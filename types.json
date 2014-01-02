@@ -16,12 +16,10 @@
         ],
         "kind": "func",
         "name": "id",
-        "term": [
-            {
-                "kind": "ident",
-                "name": "x"
-            }
-        ]
+        "term": {
+            "kind": "ident",
+            "name": "x"
+        }
     },
     {
         "args": [
@@ -31,12 +29,10 @@
         ],
         "kind": "func",
         "name": "str-to-int",
-        "term": [
-            {
-                "kind": "ident",
-                "name": "num"
-            }
-        ]
+        "term": {
+            "kind": "ident",
+            "name": "num"
+        }
     },
     {
         "args": [
@@ -55,6 +51,7 @@
     {
         "args": [
             {
+                "kind": "value",
                 "type": "String",
                 "val": "abc"
             }
