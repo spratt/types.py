@@ -127,11 +127,14 @@ def parse(text):
         print>>sys.stderr, ' '*(e.charno-1)+'^'
         print>>sys.stderr, "Invalid Syntax:", e
 
+def main():
+    if len(sys.argv) > 1:
+        if not os.path.isfile(sys.argv[1]):
+            print 'Error: arg must be a file path'
+            sys.exit(1)
+            parse(open(sys.argv[1]).read())
+    else:
+        parse(sys.stdin.read())
 
-if len(sys.argv) > 1:
-    if not os.path.isfile(sys.argv[1]):
-        print 'Error: arg must be a file path'
-        sys.exit(1)
-    parse(open(sys.argv[1]).read())
-else:
-    parse(sys.stdin.read())
+if __name__ == '__main__':
+    main()
