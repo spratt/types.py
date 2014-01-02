@@ -1,7 +1,7 @@
 #!/usr/bin/env python2.7
 
 from codetalker.pgm import Grammar, Translator
-from codetalker.pgm.special import star, plus, _or, commas
+from codetalker.pgm.special import star, plus, qstar, qplus, _or, commas
 from codetalker.pgm.tokens import STRING, NUMBER, EOF, NEWLINE, WHITE, ReToken, re, CharToken, StringToken, ReToken
 
 '''Man this looks sweet. It really should be
@@ -21,16 +21,20 @@ class IDENT(ReToken):
     rx = re.compile('[^ \t\n\r\f\v\d' + QUOTE + LPAREN + RPAREN + ']+')
 
 # rules (value is the start rule)
-def value(rule):
+def expr_list_(rule):
+    rule | star(expr_)
+    rule.astAttrs = {'values': [expr_]}
+expr_list_.astName = 'ExpressionList'
+
+def expr_(rule):
     rule | STRING | NUMBER | IDENT | apply_
-    rule.pass_single = True
 
 def apply_(rule):
-    rule | (LPAREN, IDENT, star(value), RPAREN)
-    rule.astAttrs = {'function': IDENT, 'args': [value]}
+    rule | (LPAREN, IDENT, star(expr_), RPAREN)
+    rule.astAttrs = {'function': IDENT, 'args': [expr_]}
 apply_.astName = 'Apply'
 
-grammar = Grammar(start=value,
+grammar = Grammar(start=expr_list_,
                   tokens=[SYMBOL],
                   ignore=[WHITE, NEWLINE],
                   ast_tokens=[STRING, NUMBER, IDENT])
@@ -39,6 +43,14 @@ grammar = Grammar(start=value,
 lisp = Translator(grammar)
 
 ast = grammar.ast_classes
+
+@lisp.translates(list)
+def t_list(node):
+    return [lisp.translate(value) for value in node][0]
+
+@lisp.translates(ast.ExpressionList)
+def t_expr_list(node):
+    return [lisp.translate(value) for value in node.values]
 
 @lisp.translates(STRING)
 def t_string(node):
