@@ -20,6 +20,9 @@ class IDENT(ReToken):
 class BIND(StringToken):
     strings = ['set']
 
+class DEFUN(StringToken):
+    strings = ['defun']
+
 # rules (value is the start rule)
 def expr_list_(rule):
     rule | star(expr_)
@@ -27,7 +30,7 @@ def expr_list_(rule):
 expr_list_.astName = 'ExpressionList'
 
 def expr_(rule):
-    rule | STRING | NUMBER | IDENT | apply_ | bind_
+    rule | STRING | NUMBER | IDENT | apply_ | bind_ | defun_
 
 def apply_(rule):
     rule | (LPAREN, IDENT, star(expr_), RPAREN)
@@ -39,8 +42,13 @@ def bind_(rule):
     rule.astAttrs = {'name': IDENT, 'value': expr_}
 bind_.astName = 'Bind'
 
+def defun_(rule):
+    rule | (LPAREN, DEFUN, IDENT, LPAREN, star(IDENT), RPAREN, expr_, RPAREN)
+    rule.astAttrs = {'name': IDENT, 'params': [IDENT], 'body': expr_}
+defun_.astName = 'Defun'
+
 grammar = Grammar(start=expr_list_,
-                  tokens=[SYMBOL, BIND],
+                  tokens=[SYMBOL, BIND, DEFUN],
                   ignore=[WHITE, NEWLINE],
                   ast_tokens=[STRING, NUMBER, IDENT])
 
@@ -85,6 +93,13 @@ def t_bind(node):
     return {'type': 'bind',
             'name': lisp.translate(node.name),
             'value': lisp.translate(node.value)}
+
+@lisp.translates(ast.Defun)
+def t_defun(node):
+    return {'type': 'defun',
+            'name': lisp.translate(node.name),
+            'params': [lisp.translate(param) for param in node.params][1:],
+            'body': lisp.translate(node.body)}
 
 loads = lisp.from_string
 
