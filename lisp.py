@@ -4,9 +4,6 @@ from codetalker.pgm import Grammar, Translator
 from codetalker.pgm.special import star, plus, qstar, qplus, _or, commas
 from codetalker.pgm.tokens import STRING, NUMBER, EOF, NEWLINE, WHITE, ReToken, re, CharToken, StringToken, ReToken
 
-'''Man this looks sweet. It really should be
-this easy to write a json parser.'''
-
 # special tokens
 
 QUOTE='\''
@@ -20,6 +17,9 @@ class SYMBOL(CharToken):
 class IDENT(ReToken):
     rx = re.compile('[^ \t\n\r\f\v\d' + QUOTE + LPAREN + RPAREN + ']+')
 
+class BIND(StringToken):
+    strings = ['set']
+
 # rules (value is the start rule)
 def expr_list_(rule):
     rule | star(expr_)
@@ -27,15 +27,20 @@ def expr_list_(rule):
 expr_list_.astName = 'ExpressionList'
 
 def expr_(rule):
-    rule | STRING | NUMBER | IDENT | apply_
+    rule | STRING | NUMBER | IDENT | apply_ | bind_
 
 def apply_(rule):
     rule | (LPAREN, IDENT, star(expr_), RPAREN)
     rule.astAttrs = {'function': IDENT, 'args': [expr_]}
 apply_.astName = 'Apply'
 
+def bind_(rule):
+    rule | (LPAREN, BIND, IDENT, expr_, RPAREN)
+    rule.astAttrs = {'name': IDENT, 'value': expr_}
+bind_.astName = 'Bind'
+
 grammar = Grammar(start=expr_list_,
-                  tokens=[SYMBOL],
+                  tokens=[SYMBOL, BIND],
                   ignore=[WHITE, NEWLINE],
                   ast_tokens=[STRING, NUMBER, IDENT])
 
@@ -74,6 +79,12 @@ def t_apply(node):
     return {'type': 'apply',
             'function': lisp.translate(node.function),
             'args': list(lisp.translate(value) for value in node.args)}
+
+@lisp.translates(ast.Bind)
+def t_bind(node):
+    return {'type': 'bind',
+            'name': lisp.translate(node.name),
+            'value': lisp.translate(node.value)}
 
 loads = lisp.from_string
 

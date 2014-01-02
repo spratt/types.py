@@ -2,3 +2,4 @@
 42
 this-is-an-ident
 (foo 5 "this is another string")
+(set x 5)
