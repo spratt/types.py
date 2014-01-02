@@ -1,8 +1,16 @@
 #!/usr/bin/env python2.7
+'''
+lisp.py
+Copyright 2013-2014 Simon David Pratt
+See LICENSE for license information
+
+This program parses a subset of lisp syntax and generates an AST in JSON format
+'''
 
 from codetalker.pgm import Grammar, Translator
 from codetalker.pgm.special import star, plus, qstar, qplus, _or, commas
-from codetalker.pgm.tokens import STRING, NUMBER, EOF, NEWLINE, WHITE, ReToken, re, CharToken, StringToken, ReToken
+from codetalker.pgm.tokens import (STRING, NUMBER, EOF, NEWLINE, WHITE, ReToken,
+                                   re, CharToken, StringToken, ReToken)
 
 # special tokens
 
@@ -110,12 +118,9 @@ def t_defun(node):
 
 loads = lisp.from_string
 
-import json
-import os
-import sys
-from codetalker.pgm.errors import ParseError, TokenError
-
 def parse(text):
+    import json
+    from codetalker.pgm.errors import ParseError, TokenError
     try:
         print json.dumps(loads(text), sort_keys=True,
                          indent=4, separators=(',', ': '))
@@ -128,11 +133,13 @@ def parse(text):
         print>>sys.stderr, "Invalid Syntax:", e
 
 def main():
+    import os
+    import sys
     if len(sys.argv) > 1:
         if not os.path.isfile(sys.argv[1]):
             print 'Error: arg must be a file path'
             sys.exit(1)
-            parse(open(sys.argv[1]).read())
+        parse(open(sys.argv[1]).read())
     else:
         parse(sys.stdin.read())
 
