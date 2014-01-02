@@ -1,0 +1,98 @@
+[
+  //
+  // expr. or decl.         :  var num = 100
+  //
+  // expected inferred type :    Integer
+  //
+  {
+    kind: "bind",
+    name: "num",
+    term: { kind: "value", type: "Integer", term: 100 }
+  },
+  
+  //
+  // expr. or decl.         :  function id(x) { return x }
+  //
+  // expected inferred type :    Function<`a,`a>
+  //
+  {
+    kind: "func",
+    name: "id",
+    args: [ { name: "x" } ],
+    term: { kind: "ident", name: "x" }
+  },
+  
+  //
+  // expr. or decl.         :  function str2intFunc (s : String) { return num }
+  //
+  // expected inferred type :    Function<String,Integer>
+  //
+  {
+    kind: "func",
+    name: "str2intFunc",
+    args: [ { name: "s", type: "String" } ],
+    term: { kind: "ident", name: "num" }
+  },
+  
+  //
+  // expr. or decl.         :  function (a) { return str2intFunc }
+  //
+  // expected inferred type :    Function<`b,Function<String,Integer>>
+  //
+  {
+    kind: "func",
+    name: "",
+    args: [ { name: "a" } ],
+    term: { kind: "ident", name: "str2intFunc" }
+  },
+  
+  //
+  // expr. or decl.         :  id ( true )
+  //
+  // expected inferred type :    Boolean
+  //
+  {
+    kind: "apply",
+    name: { kind: "ident", name: "id" },
+    args: [ { kind: "value", type: "Boolean", term: true } ]
+  },
+  
+  //
+  // expr. or decl.         :  str2intFunc ( "abc" )
+  //
+  // expected inferred type :    Integer
+  //
+  {
+    kind: "apply",
+    name: { kind: "ident", name: "str2intFunc" },
+    args: [ { kind: "value", type: "String", term: "abc" } ]
+  },
+  
+  //
+  // expr. or decl.         :  str2intFunc ( 200 )
+  //
+  // expected inferred type :    Error...
+  //
+  {
+    kind: "apply",
+    name: { kind: "ident", name: "str2intFunc" },
+    args: [ { kind: "value", type: "Integer", term: 200 } ]
+  },
+  
+  //
+  // expr. or decl.         :  str2intFunc ( id ( false ) )
+  //
+  // expected inferred type :    Error...
+  //
+  {
+    kind: "apply",
+    name: { kind: "ident", name: "str2intFunc" },
+    args: [
+      {
+        kind: "apply",
+        name: { kind: "ident", name: "id" },
+        args: [ { kind: "value", type: "Boolean", term: false } ]
+      }
+    ]
+  }
+]

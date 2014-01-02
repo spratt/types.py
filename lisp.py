@@ -23,6 +23,9 @@ class BIND(StringToken):
 class DEFUN(StringToken):
     strings = ['defun']
 
+class BOOL(StringToken):
+    strings = ['true', 'false']
+
 # rules (value is the start rule)
 def expr_list_(rule):
     rule | star(expr_)
@@ -30,7 +33,7 @@ def expr_list_(rule):
 expr_list_.astName = 'ExpressionList'
 
 def expr_(rule):
-    rule | STRING | NUMBER | IDENT | apply_ | bind_ | defun_
+    rule | STRING | NUMBER | BOOL | IDENT | apply_ | bind_ | defun_
 
 def apply_(rule):
     rule | (LPAREN, IDENT, star(expr_), RPAREN)
@@ -43,14 +46,14 @@ def bind_(rule):
 bind_.astName = 'Bind'
 
 def defun_(rule):
-    rule | (LPAREN, DEFUN, IDENT, LPAREN, star(IDENT), RPAREN, expr_, RPAREN)
-    rule.astAttrs = {'name': IDENT, 'params': [IDENT], 'body': expr_}
+    rule | (LPAREN, DEFUN, IDENT, LPAREN, star(IDENT), RPAREN, expr_list_, RPAREN)
+    rule.astAttrs = {'name': IDENT, 'params': [IDENT], 'body': expr_list_}
 defun_.astName = 'Defun'
 
 grammar = Grammar(start=expr_list_,
                   tokens=[SYMBOL, BIND, DEFUN],
                   ignore=[WHITE, NEWLINE],
-                  ast_tokens=[STRING, NUMBER, IDENT])
+                  ast_tokens=[STRING, NUMBER, BOOL, IDENT])
 
 # translator stuff
 lisp = Translator(grammar)
@@ -67,49 +70,55 @@ def t_expr_list(node):
 
 @lisp.translates(STRING)
 def t_string(node):
-    return {'type': 'string', 'val': node.value[1:-1].decode('string_escape')}
+    return {'type': 'String', 'val': node.value[1:-1].decode('string_escape')}
 
 @lisp.translates(NUMBER)
 def t_number(node):
     val=0
     if '.' in node.value or 'e' in node.value.lower():
-        val=float(node.value)
+        return {'kind': 'value', 'type': 'Float', 'term': float(node.value)}
     else:
-        val=int(node.value)
-    return {'type': 'number', 'val': val}
+        return {'kind': 'value', 'type': 'Integer', 'term': int(node.value)}
+
+@lisp.translates(BOOL)
+def t_bool(node):
+    return {'kind': 'value', 'type': 'Boolean', 'term': bool(node.value)}
 
 @lisp.translates(IDENT)
 def t_ident(node):
-    return {'type': 'ident', 'val': node.value}
+    return {'kind': 'ident', 'name': node.value}
 
 @lisp.translates(ast.Apply)
 def t_apply(node):
-    return {'type': 'apply',
-            'function': lisp.translate(node.function),
+    return {'kind': 'apply',
+            'name': lisp.translate(node.function),
             'args': list(lisp.translate(value) for value in node.args)}
 
 @lisp.translates(ast.Bind)
 def t_bind(node):
-    return {'type': 'bind',
-            'name': lisp.translate(node.name),
-            'value': lisp.translate(node.value)}
+    return {'kind': 'bind',
+            'name': (lisp.translate(node.name))['name'],
+            'term': lisp.translate(node.value)}
 
 @lisp.translates(ast.Defun)
 def t_defun(node):
-    return {'type': 'defun',
-            'name': lisp.translate(node.name),
-            'params': [lisp.translate(param) for param in node.params][1:],
-            'body': lisp.translate(node.body)}
+    return {'kind': 'func',
+            'name': (lisp.translate(node.name))['name'],
+            'args': [{'name': (lisp.translate(param))['name']}
+                     for param in node.params][1:],
+            'term': lisp.translate(node.body)}
 
 loads = lisp.from_string
 
+import json
 import os
 import sys
 from codetalker.pgm.errors import ParseError, TokenError
 
 def parse(text):
     try:
-        print loads(text)
+        print json.dumps(loads(text), sort_keys=True,
+                         indent=4, separators=(',', ': '))
     except (TokenError, ParseError), e:
         if text:
             print>>sys.stderr, text.splitlines()[e.lineno-1]
@@ -123,8 +132,6 @@ if len(sys.argv) > 1:
     if not os.path.isfile(sys.argv[1]):
         print 'Error: arg must be a file path'
         sys.exit(1)
-    print 'parsing file: %s' % (sys.argv[1],)
     parse(open(sys.argv[1]).read())
 else:
-    print 'reading from stdin...'
     parse(sys.stdin.read())
