@@ -118,12 +118,14 @@ def t_defun(node):
 
 loads = lisp.from_string
 
-def parse(text):
+def dictToPrettyJSON(d):
     import json
+    return json.dumps(d, sort_keys=True, indent=4, separators=(',', ': '))
+
+def parse(text):
     from codetalker.pgm.errors import ParseError, TokenError
     try:
-        print json.dumps(loads(text), sort_keys=True,
-                         indent=4, separators=(',', ': '))
+        print(dictToPrettyJSON(loads(text)))
     except (TokenError, ParseError), e:
         if text:
             print>>sys.stderr, text.splitlines()[e.lineno-1]
