@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
 '''
 lisp.py
 Copyright 2013-2014 Simon David Pratt
