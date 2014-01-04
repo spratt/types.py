@@ -119,9 +119,12 @@ def t_defun(node):
 
 loads = lisp.from_string
 
-def dictToPrettyJSON(d):
+def dictToPrettyJSON(d, encoder = None):
     import json
-    return json.dumps(d, sort_keys=True, indent=4, separators=(',', ': '))
+    if encoder == None:
+        encoder = json.JSONEncoder
+    return json.dumps(d, sort_keys=True, indent=4,
+                      separators=(',', ': '), cls=encoder)
 
 def parse(text):
     from codetalker.pgm.errors import ParseError, TokenError
