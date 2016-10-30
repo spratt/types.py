@@ -1,5 +1,4 @@
-#!/usr/bin/env python2.7
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 '''
 types.py
 Copyright 2013-2014 Simon David Pratt
@@ -107,8 +106,8 @@ class Types(object):
             try:
                 self._types.append(self._infer(node, env))
             except IdentifierException as e:
-                print>>sys.stderr, ('ERROR! Undefined identifier: {}'
-                                    .format(str(e)))
+                print('ERROR! Undefined identifier: {}'.format(str(e)),
+                      file=sys.stderr)
 
     # Inference methods ########################################################
 
@@ -241,13 +240,13 @@ def infer(ast_str):
     ast = json.loads(ast_str)
     types = Types(ast)
     print(dictToPrettyJSON(types.ast, TypeEncoder))
-    print>>sys.stderr, types._types
+    print(types._types, file=sys.stderr)
         
 def main():
     import os
     if len(sys.argv) > 1:
         if not os.path.isfile(sys.argv[1]):
-            print 'Error: arg must be a file path'
+            print('Error: arg must be a file path')
             sys.exit(1)
         infer(open(sys.argv[1]).read())
     else:

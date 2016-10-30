@@ -1,5 +1,4 @@
-#!/usr/bin/env python2.7
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python3
 '''
 lisp.py
 Copyright 2013-2016 Simon David Pratt
@@ -156,7 +155,7 @@ def main():
     import sys
     if len(sys.argv) > 1:
         if not os.path.isfile(sys.argv[1]):
-            print 'Error: arg must be a file path'
+            print('Error: arg must be a file path')
             sys.exit(1)
         printAST(open(sys.argv[1]).read())
     else:
