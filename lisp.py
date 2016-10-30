@@ -12,10 +12,41 @@ http://norvig.com/lispy.html
 
 # special tokens
 
-special_chars = [ '(', ')', '"' ]
-COMMENT_CHAR = ';'
+
+def prettyPrint(d, encoder = None):
+    """Pretty prints the JSON representation of a dict.
+
+    >>> prettyPrint({'a':'b'})
+    {
+      "a": "b"
+    }
+    """
+    print(dictToPrettyJSON(d, encoder))
+
+def dictToPrettyJSON(d, encoder):
+    import json
+    if encoder == None:
+        encoder = json.JSONEncoder
+    return json.dumps(d, sort_keys=True, indent=2,
+                      separators=(',', ': '), cls=encoder)
+
+# Special Forms ################################################################
 
 def parse_begin(tokens):
+    """Parses the begin special form.
+
+    >>> parse_begin(deque([')']))
+    []
+
+    >>> prettyPrint(parse_begin(deque(['5', ')'])))
+    [
+      {
+        "kind": "value",
+        "type": "Integer",
+        "value": 5
+      }
+    ]
+    """
     L = []
     while tokens[0] != ')':
         L.append(read_from_tokens(tokens))
@@ -23,6 +54,19 @@ def parse_begin(tokens):
     return L
 
 def parse_set(tokens):
+    """Parses the set special form.
+
+    >>> prettyPrint(parse_set(deque(['x','5',')'])))
+    {
+      "kind": "bind",
+      "name": "x",
+      "term": {
+        "kind": "value",
+        "type": "Integer",
+        "value": 5
+      }
+    }
+    """
     node = {'kind' : 'bind',
             'name' : parse_ident(tokens),
             'term' : read_from_tokens(tokens)}
@@ -30,6 +74,23 @@ def parse_set(tokens):
     return node
 
 def parse_defun(tokens):
+    """Parses the defun special form.
+
+    >>> prettyPrint(parse_defun(deque(['id', '(', 'x', ')', 'x', ')'])))
+    {
+      "args": [
+        {
+          "name": "x"
+        }
+      ],
+      "kind": "func",
+      "name": "id",
+      "term": {
+        "kind": "ident",
+        "name": "x"
+      }
+    }
+    """
     name = parse_ident(tokens)
     args = []
     tokens.popleft() # pop off '('
@@ -49,7 +110,15 @@ special_forms = {
     'defun' : parse_defun
 }
 
+# Tokenizing ###################################################################
+
 def strip_comments(s):
+    """Strips the comments from a multi-line string.
+    
+    >>> strip_comments('hello ;comment\\nworld')
+    'hello \\nworld'
+    """
+    COMMENT_CHAR = ';'
     lines = []
     for line in s.split('\n'):
         if COMMENT_CHAR in line:
@@ -61,10 +130,16 @@ def strip_comments(s):
 from collections import deque
 
 def tokenize(s):
+    special_chars = [ '(', ')', '"' ]
     s = strip_comments(s)
     for special_char in special_chars:
         s = s.replace(special_char, ' ' + special_char + ' ')
     return deque(s.split())
+
+# Parsing ######################################################################
+    
+def parse(text):
+    return read_from_tokens(tokenize(text))
 
 def parse_string(tokens):
     ret = []
@@ -116,6 +191,8 @@ def parse_atom(tokens):
     else:
         return parse_symbol(tokens)
 
+# Reader #######################################################################
+    
 def read_from_tokens(tokens):
     if len(tokens) == 0:
         raise SyntaxError('unexpected EOF while reading')
@@ -136,19 +213,9 @@ def read_from_tokens(tokens):
         raise SyntaxError('unexpected )')
     else:
         return parse_atom(tokens)
-    
-def parse(text):
-    return read_from_tokens(tokenize(text))
-
-def dictToPrettyJSON(d, encoder = None):
-    import json
-    if encoder == None:
-        encoder = json.JSONEncoder
-    return json.dumps(d, sort_keys=True, indent=2,
-                      separators=(',', ': '), cls=encoder)
 
 def printAST(text):
-    print(dictToPrettyJSON(parse(text)))
+    prettyPrint(parse(text))
 
 def main():
     import os

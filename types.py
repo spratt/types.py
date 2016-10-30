@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 '''
 types.py
-Copyright 2013-2014 Simon David Pratt
+Copyright 2013-2016 Simon David Pratt
 See LICENSE for license information
 
 This program adds types to an AST in JSON format using
@@ -236,11 +236,10 @@ class Types(object):
 # Entry Points #################################################################
         
 def infer(ast_str):
-    from lisp import dictToPrettyJSON
+    from lisp import prettyPrint
     ast = json.loads(ast_str)
     types = Types(ast)
-    print(dictToPrettyJSON(types.ast, TypeEncoder))
-    print(types._types, file=sys.stderr)
+    prettyPrint(types.ast, TypeEncoder)
         
 def main():
     import os

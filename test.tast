@@ -1,0 +1,184 @@
+[
+  {
+    "kind": "value",
+    "term": "thisisastring",
+    "type": "String"
+  },
+  {
+    "kind": "value",
+    "type": "Integer",
+    "value": 42
+  },
+  {
+    "kind": "bind",
+    "name": "x",
+    "term": {
+      "kind": "value",
+      "type": "Integer",
+      "value": 5
+    },
+    "type": "Integer"
+  },
+  {
+    "args": [
+      {
+        "name": "a"
+      },
+      {
+        "name": "b"
+      },
+      {
+        "name": "c"
+      }
+    ],
+    "kind": "func",
+    "name": "foo",
+    "term": {
+      "kind": "value",
+      "type": "Integer",
+      "value": 5
+    },
+    "type": "Function<[VarType(1,None), VarType(2,None), VarType(3,None), Integer]>"
+  },
+  {
+    "args": [
+      {
+        "kind": "value",
+        "type": "Integer",
+        "value": 1
+      },
+      {
+        "kind": "value",
+        "type": "Integer",
+        "value": 2
+      },
+      {
+        "kind": "ident",
+        "name": "x",
+        "type": "Integer"
+      }
+    ],
+    "kind": "apply",
+    "name": {
+      "kind": "ident",
+      "name": "foo",
+      "type": "Function"
+    },
+    "type": "VarType(4,Integer)"
+  },
+  {
+    "kind": "bind",
+    "name": "num",
+    "term": {
+      "kind": "value",
+      "type": "Integer",
+      "value": 100
+    },
+    "type": "Integer"
+  },
+  {
+    "args": [
+      {
+        "name": "x"
+      }
+    ],
+    "kind": "func",
+    "name": "id",
+    "term": {
+      "kind": "ident",
+      "name": "x",
+      "type": "VarType(8,None)"
+    },
+    "type": "Function<[VarType(8,None), VarType(8,None)]>"
+  },
+  {
+    "args": [
+      {
+        "name": "s"
+      }
+    ],
+    "kind": "func",
+    "name": "any-to-100",
+    "term": {
+      "kind": "ident",
+      "name": "num",
+      "type": "Integer"
+    },
+    "type": "Function<[VarType(9,None), Integer]>"
+  },
+  {
+    "args": [
+      {
+        "kind": "value",
+        "type": "Boolean",
+        "value": true
+      }
+    ],
+    "kind": "apply",
+    "name": {
+      "kind": "ident",
+      "name": "id",
+      "type": "Function"
+    },
+    "type": "VarType(10,Boolean)"
+  },
+  {
+    "args": [
+      {
+        "kind": "value",
+        "term": "abc",
+        "type": "String"
+      }
+    ],
+    "kind": "apply",
+    "name": {
+      "kind": "ident",
+      "name": "any-to-100",
+      "type": "Function"
+    },
+    "type": "VarType(12,Integer)"
+  },
+  {
+    "args": [
+      {
+        "kind": "value",
+        "type": "Integer",
+        "value": 200
+      }
+    ],
+    "kind": "apply",
+    "name": {
+      "kind": "ident",
+      "name": "any-to-100",
+      "type": "Function"
+    },
+    "type": "VarType(14,Integer)"
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "kind": "value",
+            "type": "Boolean",
+            "value": false
+          }
+        ],
+        "kind": "apply",
+        "name": {
+          "kind": "ident",
+          "name": "id",
+          "type": "Function"
+        },
+        "type": "VarType(16,Boolean)"
+      }
+    ],
+    "kind": "apply",
+    "name": {
+      "kind": "ident",
+      "name": "any-to-100",
+      "type": "Function"
+    },
+    "type": "VarType(18,Integer)"
+  }
+]

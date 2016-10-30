@@ -1,0 +1,164 @@
+[
+  {
+    "kind": "value",
+    "term": "thisisastring",
+    "type": "String"
+  },
+  {
+    "kind": "value",
+    "type": "Integer",
+    "value": 42
+  },
+  {
+    "kind": "bind",
+    "name": "x",
+    "term": {
+      "kind": "value",
+      "type": "Integer",
+      "value": 5
+    }
+  },
+  {
+    "args": [
+      {
+        "name": "a"
+      },
+      {
+        "name": "b"
+      },
+      {
+        "name": "c"
+      }
+    ],
+    "kind": "func",
+    "name": "foo",
+    "term": {
+      "kind": "value",
+      "type": "Integer",
+      "value": 5
+    }
+  },
+  {
+    "args": [
+      {
+        "kind": "value",
+        "type": "Integer",
+        "value": 1
+      },
+      {
+        "kind": "value",
+        "type": "Integer",
+        "value": 2
+      },
+      {
+        "kind": "ident",
+        "name": "x"
+      }
+    ],
+    "kind": "apply",
+    "name": {
+      "kind": "ident",
+      "name": "foo"
+    }
+  },
+  {
+    "kind": "bind",
+    "name": "num",
+    "term": {
+      "kind": "value",
+      "type": "Integer",
+      "value": 100
+    }
+  },
+  {
+    "args": [
+      {
+        "name": "x"
+      }
+    ],
+    "kind": "func",
+    "name": "id",
+    "term": {
+      "kind": "ident",
+      "name": "x"
+    }
+  },
+  {
+    "args": [
+      {
+        "name": "s"
+      }
+    ],
+    "kind": "func",
+    "name": "any-to-100",
+    "term": {
+      "kind": "ident",
+      "name": "num"
+    }
+  },
+  {
+    "args": [
+      {
+        "kind": "value",
+        "type": "Boolean",
+        "value": true
+      }
+    ],
+    "kind": "apply",
+    "name": {
+      "kind": "ident",
+      "name": "id"
+    }
+  },
+  {
+    "args": [
+      {
+        "kind": "value",
+        "term": "abc",
+        "type": "String"
+      }
+    ],
+    "kind": "apply",
+    "name": {
+      "kind": "ident",
+      "name": "any-to-100"
+    }
+  },
+  {
+    "args": [
+      {
+        "kind": "value",
+        "type": "Integer",
+        "value": 200
+      }
+    ],
+    "kind": "apply",
+    "name": {
+      "kind": "ident",
+      "name": "any-to-100"
+    }
+  },
+  {
+    "args": [
+      {
+        "args": [
+          {
+            "kind": "value",
+            "type": "Boolean",
+            "value": false
+          }
+        ],
+        "kind": "apply",
+        "name": {
+          "kind": "ident",
+          "name": "id"
+        }
+      }
+    ],
+    "kind": "apply",
+    "name": {
+      "kind": "ident",
+      "name": "any-to-100"
+    }
+  }
+]
