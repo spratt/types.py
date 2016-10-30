@@ -1,7 +1,9 @@
-"this is a string"
-42
-this-is-an-ident
-(foo 5 "this is another string")
-(set x 5)
-(defun x (a b c)
-  5)
+; This is a comment preceding the first term
+(begin
+ ; This is a comment comment within the first term
+ "this is a string"
+ 42
+ (set x 5)
+ (defun foo (a b c)
+   5)
+ (foo 1 2 3))

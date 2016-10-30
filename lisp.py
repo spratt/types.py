@@ -2,141 +2,154 @@
 # -*- coding: utf-8 -*-
 '''
 lisp.py
-Copyright 2013-2014 Simon David Pratt
+Copyright 2013-2016 Simon David Pratt
 See LICENSE for license information
 
-This program parses a subset of lisp syntax and generates an AST in JSON format
-'''
+This program parses a subset of lisp syntax and generates an AST in JSON format.
 
-from codetalker.pgm import Grammar, Translator
-from codetalker.pgm.special import star, plus, qstar, qplus, _or, commas
-from codetalker.pgm.tokens import (STRING, NUMBER, EOF, NEWLINE, WHITE, ReToken,
-                                   re, CharToken, StringToken, ReToken)
+Lisp parsing partially based on Peter Norvig's lispy code:
+http://norvig.com/lispy.html
+'''
 
 # special tokens
 
-QUOTE='\''
-LPAREN='('
-RPAREN=')'
+special_chars = [ '(', ')', '"' ]
+COMMENT_CHAR = ';'
 
-class SYMBOL(CharToken):
-    chars = QUOTE + LPAREN + RPAREN
-    num = 3
+def parse_begin(tokens):
+    L = []
+    while tokens[0] != ')':
+        L.append(read_from_tokens(tokens))
+    tokens.popleft() # pop off ')'
+    return L
 
-class IDENT(ReToken):
-    rx = re.compile('[^ \t\n\r\f\v\d' + QUOTE + LPAREN + RPAREN + ']+')
+def parse_set(tokens):
+    node = {'kind' : 'bind',
+            'name' : parse_ident(tokens),
+            'term' : read_from_tokens(tokens)}
+    tokens.popleft() # pop off ')'
+    return node
 
-class BIND(StringToken):
-    strings = ['set']
+def parse_defun(tokens):
+    name = parse_ident(tokens)
+    args = []
+    tokens.popleft() # pop off '('
+    while tokens[0] != ')':
+        args.append({'name': tokens.popleft()})
+    tokens.popleft() # pop off ')'
+    node = {'kind' : 'func',
+            'name' : name,
+            'args' : args,
+            'term' : read_from_tokens(tokens)}
+    tokens.popleft() # pop off ')'
+    return node
 
-class DEFUN(StringToken):
-    strings = ['defun']
+special_forms = {
+    'begin' : parse_begin,
+    'set'   : parse_set,
+    'defun' : parse_defun
+}
 
-class BOOL(StringToken):
-    strings = ['true', 'false']
+def strip_comments(s):
+    lines = []
+    for line in s.split('\n'):
+        if COMMENT_CHAR in line:
+            lines.append(line[:line.index(COMMENT_CHAR)])
+        else:
+            lines.append(line)
+    return '\n'.join(lines)
 
-# rules (value is the start rule)
-def expr_list_(rule):
-    rule | star(expr_)
-    rule.astAttrs = {'values': [expr_]}
-expr_list_.astName = 'ExpressionList'
+from collections import deque
 
-def expr_(rule):
-    rule | STRING | NUMBER | BOOL | IDENT | apply_ | bind_ | defun_
+def tokenize(s):
+    s = strip_comments(s)
+    for special_char in special_chars:
+        s = s.replace(special_char, ' ' + special_char + ' ')
+    return deque(s.split())
 
-def apply_(rule):
-    rule | (LPAREN, IDENT, star(expr_), RPAREN)
-    rule.astAttrs = {'function': IDENT, 'args': [expr_]}
-apply_.astName = 'Apply'
+def parse_string(tokens):
+    ret = []
+    tokens.popleft() # pop off '"'
+    while tokens[0] != '"':
+        ret.append(tokens.popleft())
+    tokens.popleft() # pop off '"'
+    return {'kind' : 'value',
+            'type' : 'String',
+            'term' : ''.join(ret)}
 
-def bind_(rule):
-    rule | (LPAREN, BIND, IDENT, expr_, RPAREN)
-    rule.astAttrs = {'name': IDENT, 'value': expr_}
-bind_.astName = 'Bind'
+def parse_ident(tokens):
+    return tokens.popleft()
 
-def defun_(rule):
-    rule | (LPAREN, DEFUN, IDENT, LPAREN, star(IDENT), RPAREN, expr_, RPAREN)
-    rule.astAttrs = {'name': IDENT, 'params': [IDENT], 'body': expr_}
-defun_.astName = 'Defun'
+def parse_boolean(tokens):
+    return {'kind'  : 'value',
+            'type'  : 'Boolean',
+            'value' : tokens.popleft() == 'true'}
 
-grammar = Grammar(start=expr_list_,
-                  tokens=[SYMBOL, BIND, DEFUN],
-                  ignore=[WHITE, NEWLINE],
-                  ast_tokens=[STRING, NUMBER, BOOL, IDENT])
+import re
+def is_number(token):
+    return re.match('\d+(\.\d*)?', token)
 
-# translator stuff
-lisp = Translator(grammar)
+def parse_number(tokens):
+    node = {'kind' : 'value'}
+    try:
+        token = tokens.popleft()
+        if '.' in token:
+            node['type'] = 'Float'
+            node['value'] = float(token)
+        else:
+            node['type'] = 'Integer'
+            node['value'] = int(token)
+    except:
+        raise SyntaxError('Invalid atom')
+    return node
 
-ast = grammar.ast_classes
+def parse_symbol(tokens):
+    return {'kind' : 'ident',
+            'name' : tokens.popleft()}
 
-@lisp.translates(list)
-def t_list(node):
-    return [lisp.translate(value) for value in node][0]
-
-@lisp.translates(ast.ExpressionList)
-def t_expr_list(node):
-    return [lisp.translate(value) for value in node.values]
-
-@lisp.translates(STRING)
-def t_string(node):
-    return {'kind': 'value', 'type': 'String', 'val': node.value[1:-1].decode('string_escape')}
-
-@lisp.translates(NUMBER)
-def t_number(node):
-    val=0
-    if '.' in node.value or 'e' in node.value.lower():
-        return {'kind': 'value', 'type': 'Float', 'term': float(node.value)}
+def parse_atom(tokens):
+    if tokens[0] == '"':
+        return parse_string(tokens)
+    elif tokens[0] == 'false' or tokens[0] == 'true':
+        return parse_boolean(tokens)
+    elif is_number(tokens[0]):
+        return parse_number(tokens)
     else:
-        return {'kind': 'value', 'type': 'Integer', 'term': int(node.value)}
+        return parse_symbol(tokens)
 
-@lisp.translates(BOOL)
-def t_bool(node):
-    return {'kind': 'value', 'type': 'Boolean', 'term': bool(node.value)}
-
-@lisp.translates(IDENT)
-def t_ident(node):
-    return {'kind': 'ident', 'name': node.value}
-
-@lisp.translates(ast.Apply)
-def t_apply(node):
-    return {'kind': 'apply',
-            'name': lisp.translate(node.function),
-            'args': list(lisp.translate(value) for value in node.args)}
-
-@lisp.translates(ast.Bind)
-def t_bind(node):
-    return {'kind': 'bind',
-            'name': (lisp.translate(node.name))['name'],
-            'term': lisp.translate(node.value)}
-
-@lisp.translates(ast.Defun)
-def t_defun(node):
-    return {'kind': 'func',
-            'name': (lisp.translate(node.name))['name'],
-            'args': [{'name': (lisp.translate(param))['name']}
-                     for param in node.params][1:],
-            'term': lisp.translate(node.body)}
-
-loads = lisp.from_string
+def read_from_tokens(tokens):
+    if len(tokens) == 0:
+        raise SyntaxError('unexpected EOF while reading')
+    if tokens[0] == '(':
+        tokens.popleft() # pop off '('
+        if tokens[0] in special_forms:
+            ident = parse_ident(tokens)
+            return special_forms[ident](tokens)
+        else:
+            node = {'kind' : 'apply',
+                    'name' : parse_symbol(tokens),
+                    'args' : []}
+            while tokens[0] != ')':
+                node['args'].append(read_from_tokens(tokens))
+            tokens.popleft() # pop off ')'
+            return node
+    elif tokens[0] == ')':
+        raise SyntaxError('unexpected )')
+    else:
+        return parse_atom(tokens)
+    
+def parse(text):
+    return read_from_tokens(tokenize(text))
 
 def dictToPrettyJSON(d, encoder = None):
     import json
     if encoder == None:
         encoder = json.JSONEncoder
-    return json.dumps(d, sort_keys=True, indent=4,
+    return json.dumps(d, sort_keys=True, indent=2,
                       separators=(',', ': '), cls=encoder)
 
-def parse(text):
-    from codetalker.pgm.errors import ParseError, TokenError
-    try:
-        print(dictToPrettyJSON(loads(text)))
-    except (TokenError, ParseError), e:
-        if text:
-            print>>sys.stderr, text.splitlines()[e.lineno-1]
-        else:
-            print>>sys.stderr
-        print>>sys.stderr, ' '*(e.charno-1)+'^'
-        print>>sys.stderr, "Invalid Syntax:", e
+def printAST(text):
+    print(dictToPrettyJSON(parse(text)))
 
 def main():
     import os
@@ -145,9 +158,9 @@ def main():
         if not os.path.isfile(sys.argv[1]):
             print 'Error: arg must be a file path'
             sys.exit(1)
-        parse(open(sys.argv[1]).read())
+        printAST(open(sys.argv[1]).read())
     else:
-        parse(sys.stdin.read())
+        printAST(sys.stdin.read())
 
 if __name__ == '__main__':
     main()
